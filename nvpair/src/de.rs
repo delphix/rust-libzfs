@@ -130,7 +130,10 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut ValueDeserializer<'de> {
     {
         match self.data {
             NvData::Unknown => Err(Error::UnknownNvPairType),
-            NvData::Bool => visitor.visit_none(),
+            // XXX visit_unit() would seem to make sense for Bool, but
+            // deserializing it into `Option<()>` doesn't seem to work (it's
+            // always None).
+            NvData::Bool => visitor.visit_bool(true),
             NvData::BoolV(v) => visitor.visit_bool(v),
             NvData::Byte(v) => visitor.visit_u8(v),
             NvData::Int8(v) => visitor.visit_i8(v),
