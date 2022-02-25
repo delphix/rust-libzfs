@@ -32,8 +32,8 @@ enum NvDataOwned {
     Int64Array(Vec<i64>),
     Uint64Array(Vec<u64>),
     NvListArray(Vec<NvList>),
+    StringArray(Vec<CString>),
     /* TODO:
-    pub const DATA_TYPE_STRING_ARRAY: Type = 17;
     pub const DATA_TYPE_HRTIME: Type = 18;
     pub const DATA_TYPE_BOOLEAN_ARRAY: Type = 24;
     pub const DATA_TYPE_DOUBLE: Type = 27;
@@ -68,6 +68,12 @@ impl NvEncode for NvDataOwned {
             NvDataOwned::Int64Array(v) => v.insert_into(name, nv),
             NvDataOwned::Uint64Array(v) => v.insert_into(name, nv),
             NvDataOwned::NvListArray(v) => v
+                .iter()
+                .map(|nv| nv.as_ref())
+                .collect::<Vec<_>>()
+                .as_slice()
+                .insert_into(name, nv),
+            NvDataOwned::StringArray(v) => v
                 .iter()
                 .map(|nv| nv.as_ref())
                 .collect::<Vec<_>>()
@@ -482,6 +488,24 @@ impl<'a> ser::SerializeSeq for SeqSerializer<'a> {
         if self.vec.is_empty() {
             return Ok(NvDataOwned::None);
         }
+        macro_rules! array {
+            ($singular:path, $plural:path) => {{
+                let len = self.vec.len();
+                let mut vec = Vec::with_capacity(len);
+                let mut iter = self.vec.into_iter();
+                while let Some($singular(v)) = iter.next() {
+                    vec.push(v);
+                }
+                if vec.len() == len {
+                    Ok($plural(vec))
+                } else {
+                    Err(Error::Message(
+                        "hetrogenious sequences not supported".to_string(),
+                    ))
+                }
+            }};
+        }
+
         match self.vec[0] {
             NvDataOwned::Unknown => Err(Error::Message(
                 "sequence of unknown not supported".to_string(),
@@ -491,119 +515,28 @@ impl<'a> ser::SerializeSeq for SeqSerializer<'a> {
                 "sequence of (value-less) bool not supported".to_string(),
             )),
             NvDataOwned::BoolV(_) => todo!(),
-            NvDataOwned::Byte(_) => {
-                let mut vec = Vec::with_capacity(self.vec.len());
-                let len = self.vec.len();
-                let mut iter = self.vec.into_iter();
-                while let Some(NvDataOwned::Byte(v)) = iter.next() {
-                    vec.push(v);
-                }
-                if vec.len() == len {
-                    Ok(NvDataOwned::ByteArray(vec))
-                } else {
-                    Err(Error::Message(
-                        "hetrogenious sequences not supported".to_string(),
-                    ))
-                }
-            }
-            NvDataOwned::Int8(_) => {
-                todo!()
-            }
-            NvDataOwned::Uint8(_) => {
-                let mut vec = Vec::with_capacity(self.vec.len());
-                let len = self.vec.len();
-                let mut iter = self.vec.into_iter();
-                while let Some(NvDataOwned::Uint8(v)) = iter.next() {
-                    vec.push(v);
-                }
-                if vec.len() == len {
-                    Ok(NvDataOwned::Uint8Array(vec))
-                } else {
-                    Err(Error::Message(
-                        "hetrogenious sequences not supported".to_string(),
-                    ))
-                }
-            }
-            NvDataOwned::Int16(_) => {
-                todo!()
-            }
-            NvDataOwned::Uint16(_) => {
-                let mut vec = Vec::with_capacity(self.vec.len());
-                let len = self.vec.len();
-                let mut iter = self.vec.into_iter();
-                while let Some(NvDataOwned::Uint16(v)) = iter.next() {
-                    vec.push(v);
-                }
-                if vec.len() == len {
-                    Ok(NvDataOwned::Uint16Array(vec))
-                } else {
-                    Err(Error::Message(
-                        "hetrogenious sequences not supported".to_string(),
-                    ))
-                }
-            }
-            NvDataOwned::Int32(_) => todo!(),
-            NvDataOwned::Uint32(_) => todo!(),
-            NvDataOwned::Int64(_) => todo!(),
-            NvDataOwned::Uint64(_) => {
-                let mut vec = Vec::with_capacity(self.vec.len());
-                let len = self.vec.len();
-                let mut iter = self.vec.into_iter();
-                while let Some(NvDataOwned::Uint64(v)) = iter.next() {
-                    vec.push(v);
-                }
-                if vec.len() == len {
-                    Ok(NvDataOwned::Uint64Array(vec))
-                } else {
-                    Err(Error::Message(
-                        "hetrogenious sequences not supported".to_string(),
-                    ))
-                }
-            }
-            NvDataOwned::String(_) => todo!(),
-            NvDataOwned::NvList(_) => {
-                let mut vec = Vec::with_capacity(self.vec.len());
-                let len = self.vec.len();
-                let mut iter = self.vec.into_iter();
-                while let Some(NvDataOwned::NvList(v)) = iter.next() {
-                    vec.push(v);
-                }
-                if vec.len() == len {
-                    Ok(NvDataOwned::NvListArray(vec))
-                } else {
-                    Err(Error::Message(
-                        "hetrogenious sequences not supported".to_string(),
-                    ))
-                }
-            }
-            NvDataOwned::ByteArray(_) => Err(Error::Message(
-                "sequence of sequence not supported".to_string(),
-            )),
-            NvDataOwned::Int8Array(_) => Err(Error::Message(
-                "sequence of sequence not supported".to_string(),
-            )),
-            NvDataOwned::Uint8Array(_) => Err(Error::Message(
-                "sequence of sequence not supported".to_string(),
-            )),
-            NvDataOwned::Int16Array(_) => Err(Error::Message(
-                "sequence of sequence not supported".to_string(),
-            )),
-            NvDataOwned::Uint16Array(_) => Err(Error::Message(
-                "sequence of sequence not supported".to_string(),
-            )),
-            NvDataOwned::Int32Array(_) => Err(Error::Message(
-                "sequence of sequence not supported".to_string(),
-            )),
-            NvDataOwned::Uint32Array(_) => Err(Error::Message(
-                "sequence of sequence not supported".to_string(),
-            )),
-            NvDataOwned::Int64Array(_) => Err(Error::Message(
-                "sequence of sequence not supported".to_string(),
-            )),
-            NvDataOwned::Uint64Array(_) => Err(Error::Message(
-                "sequence of sequence not supported".to_string(),
-            )),
-            NvDataOwned::NvListArray(_) => Err(Error::Message(
+            NvDataOwned::Byte(_) => array!(NvDataOwned::Byte, NvDataOwned::ByteArray),
+            NvDataOwned::Int8(_) => array!(NvDataOwned::Int8, NvDataOwned::Int8Array),
+            NvDataOwned::Uint8(_) => array!(NvDataOwned::Uint8, NvDataOwned::Uint8Array),
+            NvDataOwned::Int16(_) => array!(NvDataOwned::Int16, NvDataOwned::Int16Array),
+            NvDataOwned::Uint16(_) => array!(NvDataOwned::Uint16, NvDataOwned::Uint16Array),
+            NvDataOwned::Int32(_) => array!(NvDataOwned::Int32, NvDataOwned::Int32Array),
+            NvDataOwned::Uint32(_) => array!(NvDataOwned::Uint32, NvDataOwned::Uint32Array),
+            NvDataOwned::Int64(_) => array!(NvDataOwned::Int64, NvDataOwned::Int64Array),
+            NvDataOwned::Uint64(_) => array!(NvDataOwned::Uint64, NvDataOwned::Uint64Array),
+            NvDataOwned::String(_) => array!(NvDataOwned::String, NvDataOwned::StringArray),
+            NvDataOwned::NvList(_) => array!(NvDataOwned::NvList, NvDataOwned::NvListArray),
+            NvDataOwned::ByteArray(_)
+            | NvDataOwned::Int8Array(_)
+            | NvDataOwned::Uint8Array(_)
+            | NvDataOwned::Int16Array(_)
+            | NvDataOwned::Uint16Array(_)
+            | NvDataOwned::Int32Array(_)
+            | NvDataOwned::Uint32Array(_)
+            | NvDataOwned::Int64Array(_)
+            | NvDataOwned::Uint64Array(_)
+            | NvDataOwned::NvListArray(_)
+            | NvDataOwned::StringArray(_) => Err(Error::Message(
                 "sequence of sequence not supported".to_string(),
             )),
         }
