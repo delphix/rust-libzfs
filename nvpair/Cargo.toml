@@ -1,6 +1,6 @@
 [package]
 name = "nvpair"
-version = "0.5.1-delphix0"
+version = "0.5.2-delphix0"
 authors = ["Cody P Schafer <dev@codyps.com>"]
 include = ["**/*.rs", "Cargo.toml"]
 documentation = "https://docs.rs/nvpair"

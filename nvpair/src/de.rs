@@ -9,10 +9,11 @@ pub fn from_bytes<T>(buf: &[u8]) -> Result<T>
 where
     T: DeserializeOwned,
 {
-    from_nvlist(&NvList::try_unpack(buf)?)
+    let nvl = NvList::try_unpack(buf)?;
+    from_nvlist(&nvl)
 }
 
-pub fn from_nvlist<'a, T>(s: &'a NvList) -> Result<T>
+pub fn from_nvlist<'a, T>(s: &'a NvListRef) -> Result<T>
 where
     T: Deserialize<'a>,
 {

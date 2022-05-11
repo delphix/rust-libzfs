@@ -13,7 +13,7 @@ edition = "2018"
 v2_00 = []
 
 [dependencies]
-nvpair = { path = "../nvpair", version = "0.5.1-delphix0" }
+nvpair = { path = "../nvpair", version = "0.5.2-delphix0" }
 zfs-core-sys = { path = "../zfs-core-sys", version = "0.5.0" }
 cstr-argument = "0.1"
 foreign-types = "0.5.0"
