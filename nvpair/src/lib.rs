@@ -16,6 +16,7 @@ use nvpair_sys as sys;
 use std::convert::TryInto;
 use std::ffi::CString;
 use std::mem::MaybeUninit;
+use std::os::raw::c_char;
 use std::os::raw::c_int;
 use std::{ffi, fmt, io, ptr};
 
@@ -424,7 +425,7 @@ impl NvEncode for [&ffi::CStr] {
             sys::nvlist_add_string_array(
                 nv.as_mut_ptr(),
                 name.as_ref().as_ptr(),
-                self.iter().map(|x| x.as_ptr()).collect::<Vec<*const i8>>()[..].as_ptr(),
+                self.iter().map(|x| x.as_ptr()).collect::<Vec<_>>()[..].as_ptr(),
                 self.len().try_into().unwrap(),
             )
         };
@@ -622,7 +623,7 @@ impl NvListRef {
         let size = self.encoded_size(code).unwrap() as usize;
         let mut vec = Vec::with_capacity(size);
         let mut cap = vec.capacity() as u64;
-        let mut ptr = vec.as_mut_ptr() as *mut i8;
+        let mut ptr = vec.as_mut_ptr() as *mut c_char;
 
         let v = unsafe {
             let v = nvpair_sys::nvlist_pack(
