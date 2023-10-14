@@ -7,11 +7,11 @@ struct Serializer {}
 
 #[derive(Debug)]
 enum NvDataOwned {
-    Unknown,
+    //Unknown,
     None,
     Bool,
     BoolV(bool),
-    Byte(u8),
+    //Byte(u8),
     Int8(i8),
     Uint8(u8),
     Int16(i16),
@@ -43,11 +43,11 @@ enum NvDataOwned {
 impl NvEncode for NvDataOwned {
     fn insert_into<S: CStrArgument>(&self, name: S, nv: &mut NvListRef) -> io::Result<()> {
         match self {
-            NvDataOwned::Unknown => todo!(),
+            //NvDataOwned::Unknown => todo!(),
             NvDataOwned::None => Ok(()), // ignore None values
             NvDataOwned::Bool => nv.add_boolean(name),
             NvDataOwned::BoolV(v) => v.insert_into(name, nv),
-            NvDataOwned::Byte(v) => v.insert_into(name, nv),
+            //NvDataOwned::Byte(v) => v.insert_into(name, nv),
             NvDataOwned::Int8(v) => v.insert_into(name, nv),
             NvDataOwned::Uint8(v) => v.insert_into(name, nv),
             NvDataOwned::Int16(v) => v.insert_into(name, nv),
@@ -153,7 +153,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
         self.serialize_f64(f64::from(v))
     }
 
-    fn serialize_f64(self, v: f64) -> Result<Self::Ok> {
+    fn serialize_f64(self, _v: f64) -> Result<Self::Ok> {
         todo!()
     }
 
@@ -234,7 +234,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     fn serialize_tuple_struct(
         self,
         _name: &'static str,
-        len: usize,
+        _len: usize,
     ) -> Result<Self::SerializeTupleStruct> {
         // XXX SeqSerializer requires that they be the same type (it turns into
         // nvlist_insert_*_array()), so maybe we should serialize as nvlist with
@@ -244,10 +244,10 @@ impl<'a> ser::Serializer for &'a mut Serializer {
 
     fn serialize_tuple_variant(
         self,
-        name: &'static str,
-        variant_index: u32,
-        variant: &'static str,
-        len: usize,
+        _name: &'static str,
+        _variant_index: u32,
+        _variant: &'static str,
+        _len: usize,
     ) -> Result<Self::SerializeTupleVariant> {
         todo!()
     }
@@ -263,10 +263,10 @@ impl<'a> ser::Serializer for &'a mut Serializer {
 
     fn serialize_struct_variant(
         self,
-        name: &'static str,
-        variant_index: u32,
-        variant: &'static str,
-        len: usize,
+        _name: &'static str,
+        _variant_index: u32,
+        _variant: &'static str,
+        _len: usize,
     ) -> Result<Self::SerializeStructVariant> {
         todo!()
     }
@@ -276,7 +276,7 @@ impl<'a> ser::SerializeTupleVariant for &'a mut Serializer {
     type Ok = NvDataOwned;
     type Error = Error;
 
-    fn serialize_field<T>(&mut self, value: &T) -> Result<()>
+    fn serialize_field<T>(&mut self, _value: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {
@@ -292,7 +292,7 @@ impl<'a> ser::SerializeStructVariant for &'a mut Serializer {
     type Ok = NvDataOwned;
     type Error = Error;
 
-    fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<()>
+    fn serialize_field<T>(&mut self, _key: &'static str, _value: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {
@@ -507,15 +507,13 @@ impl<'a> ser::SerializeSeq for SeqSerializer<'a> {
         }
 
         match self.vec[0] {
-            NvDataOwned::Unknown => Err(Error::Message(
-                "sequence of unknown not supported".to_string(),
-            )),
+            //NvDataOwned::Unknown => Err(Error::Message("sequence of unknown not supported".to_string())),
             NvDataOwned::None => todo!(),
             NvDataOwned::Bool => Err(Error::Message(
                 "sequence of (value-less) bool not supported".to_string(),
             )),
             NvDataOwned::BoolV(_) => todo!(),
-            NvDataOwned::Byte(_) => array!(NvDataOwned::Byte, NvDataOwned::ByteArray),
+            //NvDataOwned::Byte(_) => array!(NvDataOwned::Byte, NvDataOwned::ByteArray),
             NvDataOwned::Int8(_) => array!(NvDataOwned::Int8, NvDataOwned::Int8Array),
             NvDataOwned::Uint8(_) => array!(NvDataOwned::Uint8, NvDataOwned::Uint8Array),
             NvDataOwned::Int16(_) => array!(NvDataOwned::Int16, NvDataOwned::Int16Array),

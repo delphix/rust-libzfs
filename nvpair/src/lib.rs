@@ -443,10 +443,24 @@ impl NvEncode for [&str] {
             .iter()
             .map(|x| std::ffi::CString::new(*x).unwrap())
             .collect::<Vec<ffi::CString>>();
-        (&cstrings
+        cstrings
             .iter()
             .map(|x| x.as_c_str())
-            .collect::<Vec<&ffi::CStr>>()[..])
+            .collect::<Vec<&ffi::CStr>>()[..]
+            .insert_into(name, nv)
+    }
+}
+
+impl NvEncode for [String] {
+    fn insert_into<S: CStrArgument>(&self, name: S, nv: &mut NvListRef) -> io::Result<()> {
+        let cstrings = self
+            .iter()
+            .map(|x| std::ffi::CString::new(x.as_str()).unwrap())
+            .collect::<Vec<ffi::CString>>();
+        cstrings
+            .iter()
+            .map(|x| x.as_c_str())
+            .collect::<Vec<&ffi::CStr>>()[..]
             .insert_into(name, nv)
     }
 }
@@ -602,11 +616,11 @@ impl NvListRef {
     }
 
     pub fn as_mut_ptr(&mut self) -> *mut sys::nvlist {
-        unsafe { std::mem::transmute::<&mut NvListRef, *mut sys::nvlist>(self) }
+        (self as *mut _) as _
     }
 
     pub fn as_ptr(&self) -> *const sys::nvlist {
-        unsafe { std::mem::transmute::<&NvListRef, *const sys::nvlist>(self) }
+        (self as *const _) as _
     }
 
     pub fn encoded_size(&self, encoding: NvEncoding) -> io::Result<u64> {
@@ -1162,12 +1176,12 @@ impl NvPair {
                     );
                     std::slice::from_raw_parts(array.assume_init(), len.assume_init() as usize)
                 };
-                let mut vec = Vec::with_capacity(slice.len());
-                for p in slice {
-                    vec.push(unsafe { NvListRef::from_ptr(*p) });
-                }
-
-                NvData::NvListRefArray(vec)
+                NvData::NvListRefArray(
+                    slice
+                        .iter()
+                        .map(|p| unsafe { NvListRef::from_ptr(*p) })
+                        .collect(),
+                )
             }
             /* TODO:
             pub const DATA_TYPE_STRING_ARRAY: Type = 17;

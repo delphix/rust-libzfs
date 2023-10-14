@@ -156,7 +156,9 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut ValueDeserializer<'de> {
             NvData::Uint32Array(v) => visitor.visit_seq(SeqAccessor::new(v.iter())),
             NvData::Int64Array(v) => visitor.visit_seq(SeqAccessor::new(v.iter())),
             NvData::Uint64Array(v) => visitor.visit_seq(SeqAccessor::new(v.iter())),
-            NvData::NvListRefArray(_) => Err(Error::UnknownNvPairType),
+            NvData::NvListRefArray(ref v) => {
+                visitor.visit_seq(SeqAccessor::new(v.clone().into_iter()))
+            }
         }
     }
 
@@ -273,16 +275,8 @@ impl From<&i8> for NvData<'_> {
     }
 }
 
-/*
 impl<'a> From<&'a NvListRef> for NvData<'a> {
     fn from(v: &'a NvListRef) -> Self {
         NvData::NvListRef(v)
     }
 }
-
-impl<'a> From<&&'a NvListRef> for NvData<'a> {
-    fn from(v: &&'a NvListRef) -> Self {
-        NvData::NvListRef(*v)
-    }
-}
-*/
